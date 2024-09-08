@@ -1,4 +1,4 @@
-package assignment;
+package main.java.assignment;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,11 +25,13 @@ public class RandomWriter implements TextProcessor {
     // TODO: Check style guide on exception handling
     public static void main(String[] args) throws IOException {
         if (validateInput(args)) {
+            // Get input arguments
             String source = args[0];
             String result = args[1];
             int k = Integer.parseInt(args[2]);
             int length = Integer.parseInt(args[3]);
 
+            // Write random text based on input
             TextProcessor processor = createProcessor(k);
 
             processor.readText(source);
@@ -54,8 +56,16 @@ public class RandomWriter implements TextProcessor {
         // Parse command line arguments
         String source = args[0];
         String result = args[1];
-        int k = Integer.parseInt(args[2]);
-        int length = Integer.parseInt(args[3]);
+        int k, length;
+
+        // Edge case where k or length are not integers
+        try {
+            k = Integer.parseInt(args[2]);
+            length = Integer.parseInt(args[3]);
+        } catch (Exception e) {
+            System.err.println("k and length must be integers.");
+            return false;
+        }
 
         // Deal with k < 0 or length < 0
         if (k < 0) {
@@ -79,8 +89,11 @@ public class RandomWriter implements TextProcessor {
             System.err.println("Source file " + source + " is not readable.");
             return false;
         }
-        if (!fileLongerThanK(sourceFile, k)) {
+        // Source file not long enough for k-th order analysis
+        int inputCharCount = getFileCharCount(sourceFile);
+        if (inputCharCount < k) {
             System.err.println("The input file must have more than k characters.");
+            System.err.println(source + " has " + inputCharCount + "characters.");
         }
 
         // Check that the result file is ok, or deal with resulting problems.
@@ -104,11 +117,10 @@ public class RandomWriter implements TextProcessor {
     /**
      * Determines whether a file has more than k characters in it.
      * @param file - File to read contents of.
-     * @param k - The number of characters that file must have more than.
      * @return boolean - Whether the file has at least k characters.
      * @throws IOException - If the file does not exist.
      */
-    private static boolean fileLongerThanK(File file, int k)
+    private static int getFileCharCount(File file)
             throws IOException {
         BufferedReader fileReader = new BufferedReader(new FileReader(file));
         int charCount = 0;
@@ -120,7 +132,7 @@ public class RandomWriter implements TextProcessor {
             line = fileReader.readLine();
         }
         fileReader.close();
-        return charCount > k;
+        return charCount;
     }
 
     // Unless you need extra logic here, you might not have to touch this method
@@ -168,7 +180,7 @@ public class RandomWriter implements TextProcessor {
         // Iterate over possible seeds to populate list of next letters.
         for (int i = 0; i < lastSeedIndex; i++) {
             String seed = inputText.substring(i, i + level);
-
+            seed = seed.toLowerCase(); // The program spec does this.
             // Create new key if this seed hasn't been encountered yet.
             if (!seedToNextCharacters.containsKey(seed)) {
                 List<Character> nextChars = new ArrayList<>();
@@ -182,7 +194,12 @@ public class RandomWriter implements TextProcessor {
         }
     }
 
-    // TODO: Javadoc this
+    /**
+     * Writes text generated using input text to the output file.
+     * @param outputFilename - Name of the file to write to.
+     * @param length - Number of characters to write (non-negative).
+     * @throws IOException - If the destination file cannot be written to.
+     */
     public void writeText(String outputFilename, int length) throws IOException {
         FileWriter outputWriter = new FileWriter(outputFilename);
         String seed = getRandomSeed();
@@ -191,7 +208,7 @@ public class RandomWriter implements TextProcessor {
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextCharacters.containsKey(seed)) {
-                seed = getRandomSeed();
+                seed = getRandomSeed().toLowerCase();
             }
 
             // Pick a character using the seed and write it to the output file.
@@ -202,6 +219,7 @@ public class RandomWriter implements TextProcessor {
 
             // Update seed
             seed = seed.substring(1) + randomChar;
+            seed = seed.toLowerCase();
         }
         outputWriter.close();
     }
