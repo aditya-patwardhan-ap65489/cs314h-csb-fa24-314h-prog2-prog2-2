@@ -19,8 +19,9 @@ public class RandomWriter implements TextProcessor {
      * Randomly writes based on text from the specified input file.
      * @param args - Command line arguments
      * args[0] is the input filename
-     * args[1] is the output filename, args[2] is the level of
-     *             analysis, and args[3] is the length of output.
+     * args[1] is the output filename
+     * args[2] is the level of analysis (k)
+     * args[3] is the length (number of characters) of output
      */
     // TODO: Check style guide on exception handling
     public static void main(String[] args) throws IOException {
