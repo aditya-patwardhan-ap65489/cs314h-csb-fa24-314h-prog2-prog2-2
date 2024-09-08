@@ -1,4 +1,4 @@
-package main;
+package main.java.assignment;
 import java.io.*;
 
 public interface TextProcessor {

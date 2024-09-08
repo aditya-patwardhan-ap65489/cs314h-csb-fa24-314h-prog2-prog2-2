@@ -23,7 +23,6 @@ public class RandomWriter implements TextProcessor {
      * args[2] is the level of analysis (k)
      * args[3] is the length (number of characters) of output
      */
-    // TODO: Check style guide on exception handling
     public static void main(String[] args) throws IOException {
         if (validateInput(args)) {
             // Get input arguments
@@ -116,9 +115,8 @@ public class RandomWriter implements TextProcessor {
     }
 
     /**
-     * Determines whether a file has more than k characters in it.
+     * Returns the number of characters in a file.
      * @param file - File to read contents of.
-     * @return boolean - Whether the file has at least k characters.
      * @throws IOException - If the file does not exist.
      */
     private static int getFileCharCount(File file)
@@ -136,7 +134,11 @@ public class RandomWriter implements TextProcessor {
         return charCount;
     }
 
-    // Unless you need extra logic here, you might not have to touch this method
+    /**
+     * Static factory method for RandomWriter.
+     * @param level - The level of text analysis to perform.
+     * @return The newly instantiated TextProcessor.
+     */
     public static TextProcessor createProcessor(int level) {
       return new RandomWriter(level);
     }
@@ -168,6 +170,7 @@ public class RandomWriter implements TextProcessor {
         }
         textReader.close();
 
+        // Store input text and compute next letter frequency map for writing.
         this.inputText = textBuffer.toString();
         populateNextLetterMap();
     }
@@ -179,9 +182,8 @@ public class RandomWriter implements TextProcessor {
         int lastSeedIndex = inputText.length() - level - 1;
 
         // Iterate over possible seeds to populate list of next letters.
-        for (int i = 0; i < lastSeedIndex; i++) {
+        for (int i = 0; i <= lastSeedIndex; i++) {
             String seed = inputText.substring(i, i + level);
-            seed = seed.toLowerCase(); // The program spec does this.
             // Create new key if this seed hasn't been encountered yet.
             if (!seedToNextCharacters.containsKey(seed)) {
                 List<Character> nextChars = new ArrayList<>();
@@ -203,26 +205,37 @@ public class RandomWriter implements TextProcessor {
      */
     public void writeText(String outputFilename, int length) throws IOException {
         FileWriter outputWriter = new FileWriter(outputFilename);
+        String generatedText = generateText(length);
+        outputWriter.write(generatedText);
+        outputWriter.close();
+    }
+
+    /**
+     * Probabilistically generates text of (length) characters using input text.
+     * @param length - Number of characters to generate
+     * @return String - the generated text.
+     */
+    private String generateText(int length) {
+        StringBuffer generatedTextBuffer = new StringBuffer();
         String seed = getRandomSeed();
 
-        // Write (length) characters to the output file.
+        // Generate (length) random characters.
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextCharacters.containsKey(seed)) {
-                seed = getRandomSeed().toLowerCase();
+                seed = getRandomSeed();
             }
-
             // Pick a character using the seed and write it to the output file.
             List<Character> possibleNextChars = seedToNextCharacters.get(seed);
             int randomIndex = (int)(Math.random() * possibleNextChars.size());
             char randomChar = possibleNextChars.get(randomIndex);
-            outputWriter.write(randomChar);
+            generatedTextBuffer.append(randomChar);
 
             // Update seed
             seed = seed.substring(1) + randomChar;
-            seed = seed.toLowerCase();
         }
-        outputWriter.close();
+
+        return generatedTextBuffer.toString();
     }
 
     /**
