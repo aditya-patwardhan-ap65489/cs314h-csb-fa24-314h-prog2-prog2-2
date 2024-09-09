@@ -162,7 +162,7 @@ public class RandomWordWriter implements TextProcessor {
         // Read in input file.
         String line = textReader.readLine();
         while (line != null) {
-            textBuffer.append(line);
+            textBuffer.append(line).append('\n');
             line = textReader.readLine();
         }
         textReader.close();
@@ -223,12 +223,13 @@ public class RandomWordWriter implements TextProcessor {
     private String generateText(int length) {
         StringBuffer generatedTextBuffer = new StringBuffer();
         String seed = getRandomSeed();
-
+        System.out.println("seed="+seed);
         // Generate random words.
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextWords.containsKey(seed)) {
                 seed = getRandomSeed();
+                System.out.println("seed="+seed);
             }
 
             // Pick a word using the seed and write it to the output file.
@@ -240,10 +241,12 @@ public class RandomWordWriter implements TextProcessor {
             // Update seed
             String[] seedIndividualWords = seed.split(" ");
             StringBuffer newSeedBuffer = new StringBuffer();
-            for (int j = 1; j < level; j++) {
-                newSeedBuffer.append(seedIndividualWords[j]).append(' ');
+            if (level != 0) {
+                for (int j = 1; j < level; j++) {
+                    newSeedBuffer.append(seedIndividualWords[j]).append(' ');
+                }
+                newSeedBuffer.append(randomWord);
             }
-            newSeedBuffer.append(randomWord);
             seed = newSeedBuffer.toString();
         }
         return generatedTextBuffer.toString();
