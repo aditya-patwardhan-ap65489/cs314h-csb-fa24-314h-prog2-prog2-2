@@ -33,7 +33,6 @@ public class RandomWriter implements TextProcessor {
 
             // Write random text based on input
             TextProcessor processor = createProcessor(k);
-
             processor.readText(source);
             processor.writeText(result, length);
         } else {
@@ -63,7 +62,7 @@ public class RandomWriter implements TextProcessor {
             k = Integer.parseInt(args[2]);
             length = Integer.parseInt(args[3]);
         } catch (Exception e) {
-            System.err.println("k and length must be integers.");
+            System.err.println("k and length must be non-negative integers.");
             return false;
         }
 
@@ -90,7 +89,7 @@ public class RandomWriter implements TextProcessor {
             return false;
         }
         // Source file not long enough for k-th order analysis
-        int inputCharCount = getFileCharCount(sourceFile);
+        int inputCharCount = getFileCharCount(source);
         if (inputCharCount < k) {
             System.err.println("The input file must have more than k characters.");
             System.err.println(source + " has " + inputCharCount + "characters.");
@@ -99,7 +98,6 @@ public class RandomWriter implements TextProcessor {
         // Check that the result file is ok, or deal with resulting problems.
         File resultFile = new File(result);
         if (!resultFile.exists()) {
-            // TODO: Check try catch on the style guide
             try {
                 resultFile.createNewFile();
             } catch (IOException e) {
@@ -116,22 +114,12 @@ public class RandomWriter implements TextProcessor {
 
     /**
      * Returns the number of characters in a file.
-     * @param file - File to read contents of.
+     * @param filename - Name of file to read contents of.
      * @throws IOException - If the file does not exist.
      */
-    private static int getFileCharCount(File file)
-            throws IOException {
-        BufferedReader fileReader = new BufferedReader(new FileReader(file));
-        int charCount = 0;
-
-        // Read lines to determine total number of characters.
-        String line = fileReader.readLine();
-        while (line != null) {
-            charCount += line.length();
-            line = fileReader.readLine();
-        }
-        fileReader.close();
-        return charCount;
+    private static int getFileCharCount(String filename) throws IOException {
+        String contents = fileContentsToString(filename);
+        return contents.length(); // Number of characters = length of contents.
     }
 
     /**
@@ -140,7 +128,7 @@ public class RandomWriter implements TextProcessor {
      * @return The newly instantiated TextProcessor.
      */
     public static TextProcessor createProcessor(int level) {
-      return new RandomWriter(level);
+        return new RandomWriter(level);
     }
 
     /**
@@ -158,6 +146,13 @@ public class RandomWriter implements TextProcessor {
      * @throws IOException - If the file with the specified name doesn't exist.
      */
     public void readText(String inputFilename) throws IOException {
+        // Store input text and compute next letter frequency map for writing.
+        this.inputText = fileContentsToString(inputFilename);
+        populateNextLetterMap();
+    }
+
+    private static String fileContentsToString(String inputFilename)
+            throws IOException {
         BufferedReader textReader = new BufferedReader(new FileReader(
                 inputFilename));
         StringBuffer textBuffer = new StringBuffer();
@@ -165,20 +160,17 @@ public class RandomWriter implements TextProcessor {
         // Read in input file.
         String line = textReader.readLine();
         while (line != null) {
-            textBuffer.append(line);
+            textBuffer.append(line).append('\n');
             line = textReader.readLine();
         }
         textReader.close();
-
-        // Store input text and compute next letter frequency map for writing.
-        this.inputText = textBuffer.toString();
-        populateNextLetterMap();
+        return textBuffer.toString();
     }
 
     /**
      * Populates seedToNextCharacters from the input text.
      */
-    private void populateNextLetterMap() {
+    public void populateNextLetterMap() {
         int lastSeedIndex = inputText.length() - level - 1;
 
         // Iterate over possible seeds to populate list of next letters.
@@ -215,15 +207,15 @@ public class RandomWriter implements TextProcessor {
      * @param length - Number of characters to generate
      * @return String - the generated text.
      */
-    private String generateText(int length) {
+    public String generateText(int length) {
         StringBuffer generatedTextBuffer = new StringBuffer();
-        String seed = getRandomSeed();
+        String seed = pickRandomSeed();
 
         // Generate (length) random characters.
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextCharacters.containsKey(seed)) {
-                seed = getRandomSeed();
+                seed = pickRandomSeed();
             }
             // Pick a character using the seed and write it to the output file.
             List<Character> possibleNextChars = seedToNextCharacters.get(seed);
@@ -232,19 +224,29 @@ public class RandomWriter implements TextProcessor {
             generatedTextBuffer.append(randomChar);
 
             // Update seed
-            seed = seed.substring(1) + randomChar;
+            if (level != 0) {
+                seed = seed.substring(1) + randomChar;
+            }
         }
 
         return generatedTextBuffer.toString();
     }
 
     /**
-     * Gets a random seed from the text for analysis.
+     * Chooses a random seed from the text for analysis.
      * @return String which is the random seed.
      */
-    private String getRandomSeed() {
+    public String pickRandomSeed() {
         int maxSeedStartIndex = inputText.length() - 1 - level;
         int seedStartIndex = (int)(Math.random() * (maxSeedStartIndex + 1));
         return inputText.substring(seedStartIndex, seedStartIndex + level);
+    }
+
+    /**
+     * Accessor for seedToNextCharacters for white-box testing.
+     * @return Map<String, List<Character>> - seedToNextCharacters
+     */
+    public Map<String, List<Character>> getSeedToNextCharacters() {
+        return seedToNextCharacters;
     }
 }

@@ -96,7 +96,6 @@ public class RandomWordWriter implements TextProcessor {
         // Check that the result file is ok, or deal with resulting problems.
         File resultFile = new File(result);
         if (!resultFile.exists()) {
-            // TODO: Check try catch on the style guide
             try {
                 resultFile.createNewFile();
             } catch (IOException e) {
@@ -224,18 +223,19 @@ public class RandomWordWriter implements TextProcessor {
     private String generateText(int length) {
         StringBuffer generatedTextBuffer = new StringBuffer();
         String seed = getRandomSeed();
-        // Generate (length) random words.
+
+        // Generate random words.
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextWords.containsKey(seed)) {
                 seed = getRandomSeed();
             }
+
             // Pick a word using the seed and write it to the output file.
             List<String> possibleNextWords = seedToNextWords.get(seed);
             int randomIndex = (int)(Math.random() * possibleNextWords.size());
             String randomWord = possibleNextWords.get(randomIndex);
-            generatedTextBuffer.append(randomWord);
-            generatedTextBuffer.append(" "); // Space between words
+            generatedTextBuffer.append(randomWord).append(' ');
 
             // Update seed
             String[] seedIndividualWords = seed.split(" ");
@@ -246,7 +246,6 @@ public class RandomWordWriter implements TextProcessor {
             newSeedBuffer.append(randomWord);
             seed = newSeedBuffer.toString();
         }
-
         return generatedTextBuffer.toString();
     }
 
