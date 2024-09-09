@@ -163,6 +163,8 @@ public class RandomWriter implements TextProcessor {
             textBuffer.append(line).append('\n');
             line = textReader.readLine();
         }
+        // Remove the last newline character
+        textBuffer.deleteCharAt(textBuffer.length() - 1);
         textReader.close();
         return textBuffer.toString();
     }
