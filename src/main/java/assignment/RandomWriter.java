@@ -173,6 +173,7 @@ public class RandomWriter implements TextProcessor {
      * Populates seedToNextCharacters from the input text.
      */
     public void populateNextLetterMap() {
+        seedToNextCharacters.clear();
         int lastSeedIndex = inputText.length() - level - 1;
 
         // Iterate over possible seeds to populate list of next letters.
@@ -230,7 +231,6 @@ public class RandomWriter implements TextProcessor {
                 seed = seed.substring(1) + randomChar;
             }
         }
-
         return generatedTextBuffer.toString();
     }
 
