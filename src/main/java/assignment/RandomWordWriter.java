@@ -88,9 +88,9 @@ public class RandomWordWriter implements TextProcessor {
         }
         // Source file not long enough for k-th order analysis
         int inputWordCount = getFileWordCount(sourceFile);
-        if (inputWordCount < k) {
-            System.err.println("The input file must have more than k characters.");
-            System.err.println(source + " has " + inputWordCount + "characters.");
+        if (inputWordCount <= k) {
+            System.err.println("The input file must have more than k words.");
+            System.err.println(source + " has " + inputWordCount + "words.");
         }
 
         // Check that the result file is ok, or deal with resulting problems.
@@ -123,7 +123,7 @@ public class RandomWordWriter implements TextProcessor {
         // Read lines to determine total number of words.
         String line = fileReader.readLine();
         while (line != null) {
-            String[] words = line.split(" ");
+            String[] words = line.split("\\s+");
             wordCount += words.length;
             line = fileReader.readLine();
         }
@@ -168,7 +168,7 @@ public class RandomWordWriter implements TextProcessor {
         textReader.close();
 
         // Store input text words and compute next word frequency map.
-        this.inputTextWords = textBuffer.toString().split(" ");
+        this.inputTextWords = textBuffer.toString().split("\\s+");
         populateNextWordMap();
     }
 
@@ -176,6 +176,7 @@ public class RandomWordWriter implements TextProcessor {
      * Populates seedToNextWords from the input text.
      */
     private void populateNextWordMap() {
+        seedToNextWords.clear();
         int lastSeedIndex = inputTextWords.length - level - 1;
 
         // Iterate over possible seeds to populate list of next words.
@@ -223,13 +224,11 @@ public class RandomWordWriter implements TextProcessor {
     private String generateText(int length) {
         StringBuffer generatedTextBuffer = new StringBuffer();
         String seed = getRandomSeed();
-        System.out.println("seed="+seed);
         // Generate random words.
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextWords.containsKey(seed)) {
                 seed = getRandomSeed();
-                System.out.println("seed="+seed);
             }
 
             // Pick a word using the seed and write it to the output file.
@@ -239,7 +238,7 @@ public class RandomWordWriter implements TextProcessor {
             generatedTextBuffer.append(randomWord).append(' ');
 
             // Update seed
-            String[] seedIndividualWords = seed.split(" ");
+            String[] seedIndividualWords = seed.split("\\s+");
             StringBuffer newSeedBuffer = new StringBuffer();
             if (level != 0) {
                 for (int j = 1; j < level; j++) {
