@@ -26,32 +26,32 @@ public class RandomWriter implements TextProcessor {
      * args[3] is the length (number of characters) of output
      */
     public static void main(String[] args) throws IOException {
-        if (validateInput(args)) {
+        try {
+            validateInput(args);
             // Get input arguments
             String source = args[0];
             String result = args[1];
             int k = Integer.parseInt(args[2]);
             int length = Integer.parseInt(args[3]);
-
             // Write random text based on input
             TextProcessor processor = createProcessor(k);
             processor.readText(source);
             processor.writeText(result, length);
-        } else {
-            System.err.println("Terminating program");
+        } catch (Exception e) {
+            System.err.println(e.getMessage());
         }
     }
 
     /**
      * Helper for main method to validate the input.
      * @param args - The command line arguments.
-     * @return boolean - Whether the input arguments are valid.
+     * @throws IOException
      */
-    public static boolean validateInput(String[] args) throws IOException {
+    public static void validateInput(String[] args) throws IOException,
+            IllegalArgumentException {
         // Exit if not all arguments are provided
         if (args.length != 4) {
-            System.err.println("Exactly 4 arguments must be provided.");
-            return false;
+            throw new IllegalArgumentException("Exactly 4 arguments must be provided.");
         }
 
         // Parse command line arguments
@@ -64,37 +64,38 @@ public class RandomWriter implements TextProcessor {
             k = Integer.parseInt(args[2]);
             length = Integer.parseInt(args[3]);
         } catch (Exception e) {
-            System.err.println("k and length must be non-negative integers.");
-            return false;
+            throw new IllegalArgumentException("k and length must be non-negative integers.");
         }
 
         // Deal with k < 0 or length < 0
         if (k < 0) {
-            System.err.println("The level of analysis (k) must be non-negative.");
-            System.err.println("You set k = " + k);
-            return false;
+            String errorMessage = "The level of analysis (k) must be";
+            errorMessage += "non-negative. You set k = " + k;
+            throw new IllegalArgumentException(errorMessage);
         }
         if (length < 0) {
-            System.err.println("The length of output must be non-negative.");
-            System.err.println("You set length = " + length);
-            return false;
+            String errorMessage = "The length of output must be ";
+            errorMessage += "non-negative. You set length = " + length;
+            throw new IllegalArgumentException(errorMessage);
         }
 
         // Deal with source file problems.
         File sourceFile = new File(source);
         if (!sourceFile.exists()) {
-            System.err.println("Source file " + source + " does not exist.");
-            return false;
+            String errorMessage = "Source file " + source + " does not exist.";
+            throw new IOException(errorMessage);
         }
         if (!sourceFile.canRead()) {
-            System.err.println("Source file " + source + " is not readable.");
-            return false;
+            String errorMessage = "Source file " + source + " is not readable.";
+            throw new IOException(errorMessage);
         }
         // Source file not long enough for k-th order analysis
         int inputCharCount = getFileCharCount(source);
         if (inputCharCount <= k) {
-            System.err.println("The input file must have more than k characters.");
-            System.err.println(source + " has " + inputCharCount + "characters.");
+            String errorMessage = "The input file must have more than ";
+            errorMessage += "k characters.";
+            errorMessage += source + " has " + inputCharCount + "characters.";
+            throw new IllegalArgumentException(errorMessage);
         }
 
         // Check that the result file is ok, or deal with resulting problems.
@@ -103,15 +104,14 @@ public class RandomWriter implements TextProcessor {
             try {
                 resultFile.createNewFile();
             } catch (IOException e) {
-                System.err.println("Could not create result file " + result);
-                return false;
+                String errorMessage = "Could not create result file " + result;
+                throw new IOException(errorMessage);
             }
         }
         if (!resultFile.canWrite()) {
-            System.err.println("The result file cannot be written.");
-            return false;
+            String errorMessage = "The result file cannot be written.";
+            throw new IOException(errorMessage);
         }
-        return true;
     }
 
     /**
@@ -138,7 +138,12 @@ public class RandomWriter implements TextProcessor {
      * @param level - The level of analysis used to generate random output.
      */
     private RandomWriter(int level) {
-        this.level = level;
+        // Get around an edge case
+        if (level >= 0) {
+            this.level = level;
+        } else {
+            this.level = 0;
+        }
         this.seedToNextCharacters = new HashMap<>();
     }
 
@@ -157,7 +162,7 @@ public class RandomWriter implements TextProcessor {
         }
     }
 
-    private static String fileContentsToString(String inputFilename)
+    public static String fileContentsToString(String inputFilename)
             throws IOException {
         BufferedReader textReader = new BufferedReader(new FileReader(
                 inputFilename));
