@@ -9,6 +9,48 @@ import java.io.*;
 
 public class RandomWriterTest {
     /**
+     * Tests RandomWriter's input validation for the main method.
+     * Should not throw an Exception.
+     */
+    @Test
+    public void testRandomWriterInputValidation() throws IOException {
+        // Wrong # of arguments
+        String[] args = new String[]{"arg0", "arg1", "arg2"};
+        RandomWriter.validateInput(args);
+
+        // Invalid file names
+        args = new String[]{"notafile", "notafile", "1", "200"};
+        RandomWriter.validateInput(args);
+
+        // k or length aren't integers
+        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "abc", "123"};
+        RandomWriter.validateInput(args);
+        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1.23", "123"};
+        RandomWriter.validateInput(args);
+
+        // k or length aren't nonnegative
+        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "-1", "2"};
+        RandomWriter.validateInput(args);
+        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1", "-2"};
+        RandomWriter.validateInput(args);
+
+        // length < k
+        args = new String[]{"test_text/Blank.txt", "BlankOut.txt", "1", "2"};
+        RandomWriter.validateInput(args);
+
+        // Input file does not exist
+        args = new String[]{"test_text/Nonexistent.txt", "NonexistentOut.txt", "1", "2"};
+        RandomWriter.validateInput(args);
+
+        // This is actually valid input
+        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut2.txt", "1", "2"};
+        RandomWriter.validateInput(args);
+        // Same, but output file doesn't exist
+        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1", "2"};
+        RandomWriter.validateInput(args);
+    }
+
+    /**
      * Tests RandomWriter using cases with manually checkable answers.
      */
     @Test
@@ -26,14 +68,14 @@ public class RandomWriterTest {
     private void checkAllOneCharacter() throws IOException {
         // Test with all the same character
         // Using non-alphabet also covers a potential corner case
-        int outputLen = 26;
+        int outputLength = 26;
         int analysisLevel = 3;
         TextProcessor generator = RandomWriter.createProcessor(analysisLevel);
         String allAndFilename = "test_text/And.txt";
         generator.readText(allAndFilename);
         String outputFilename = "AndOut.txt";
-        generator.writeText(outputFilename, outputLen);
-        String repeatAnd = "&".repeat(outputLen);
+        generator.writeText(outputFilename, outputLength);
+        String repeatAnd = "&".repeat(outputLength);
 
         // The generated text should be all ampersands.
         String outputText = getFileContents(outputFilename);
@@ -46,7 +88,7 @@ public class RandomWriterTest {
      * cannot be written to.
      */
     private void checkAlphabet() throws IOException {
-        int outputLen = 26; // 26 characters of output
+        int outputLength = 26; // 26 characters of output
         int analysisLevel = 1;
 
         // Test using the alphabet
@@ -56,7 +98,7 @@ public class RandomWriterTest {
         String alphabetFilename = "test_text/ABCs.txt";
         generator.readText(alphabetFilename);
         String outputFilename = "ABCsOut.txt";
-        generator.writeText(outputFilename, outputLen);
+        generator.writeText(outputFilename, outputLength);
 
         // The generated text should be the alphabet with some offset
         String outputText = getFileContents(outputFilename);
@@ -71,15 +113,15 @@ public class RandomWriterTest {
      */
     @Test
     public void testRandomWriterMonteCarlo() throws IOException {
-        String inputFilename = "test_books/MuchAdo.txt";
+        String inputFilename = "test_text/BeeMovie.txt";
         int outputLength = 1_000_000;
         int maxAnalysisLevel = 10;
         int analysisLevelIncrement = 1;
-        // Ensure next character distributions are same to 3% accuracy
+        // Ensure next character distributions are same to 1% accuracy
         double tolerance = 0.03;
 
         // Check writer output for multiple analysis levels
-        for (int k = 1; k <= maxAnalysisLevel; k += analysisLevelIncrement) {
+        for (int k = 0; k <= maxAnalysisLevel; k += analysisLevelIncrement) {
             RandomWriter writer = (RandomWriter) RandomWriter.createProcessor(k);
             // Read input text, write to output
             writer.readText(inputFilename);
@@ -124,32 +166,6 @@ public class RandomWriterTest {
 
         // Return as String
         return textBuffer.toString();
-    }
-
-    /**
-     * Helper to write random uniform text to a file.
-     * A character is selected at random and written.
-     * @param filename - Name of file to write to as a String.
-     * @param length - Number of characters to write.
-     */
-    private void writeUniformRandomText(String filename, int length)
-            throws IOException {
-        BufferedWriter textWriter = new BufferedWriter(new FileWriter(filename));
-        StringBuffer textBuffer = new StringBuffer();
-        String chars = "abcdefghijklmnopqrstuvwxyz1234567890 ";
-        int charsLength = chars.length();
-
-        // Generate a random text of characters
-        for (int i = 0; i < length; i++) {
-            int randomIndex = (int)(Math.random() * charsLength);
-            char randomChar = textBuffer.charAt(randomIndex);
-            textBuffer.append(randomChar);
-        }
-
-        // Write it to the output file
-        String text = textBuffer.toString();
-        textWriter.write(text);
-        textWriter.close();
     }
 
 
