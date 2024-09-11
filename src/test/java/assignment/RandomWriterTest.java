@@ -7,6 +7,9 @@ import org.junit.Test;
 import java.util.*;
 import java.io.*;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
+
 public class RandomWriterTest {
     /**
      * Tests RandomWriter's input validation for the main method.
@@ -15,39 +18,48 @@ public class RandomWriterTest {
     @Test
     public void testRandomWriterInputValidation() throws IOException {
         // Wrong # of arguments
-        String[] args = new String[]{"arg0", "arg1", "arg2"};
-        RandomWriter.validateInput(args);
+        String[] args1 = new String[]{"arg0", "arg1", "arg2"};
+        assertThrows(IllegalArgumentException.class,
+                ()->RandomWriter.validateInput(args1));
 
         // Invalid file names
-        args = new String[]{"notafile", "notafile", "1", "200"};
-        RandomWriter.validateInput(args);
+        String[] args2 = new String[]{"notafile", "notafile", "1", "200"};
+        assertThrows(IOException.class,
+                ()->RandomWriter.validateInput(args2));
 
         // k or length aren't integers
-        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "abc", "123"};
-        RandomWriter.validateInput(args);
-        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1.23", "123"};
-        RandomWriter.validateInput(args);
+        String[] args3 = new String[]{"test_books/MuchAdo.txt",
+                "MuchAdoOut.txt", "abc", "123"};
+        assertThrows(IllegalArgumentException.class,
+                ()->RandomWriter.validateInput(args3));
+        String[] args4 = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1.23", "123"};
+        assertThrows(IllegalArgumentException.class,
+                ()->RandomWriter.validateInput(args4));
 
         // k or length aren't nonnegative
-        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "-1", "2"};
-        RandomWriter.validateInput(args);
-        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1", "-2"};
-        RandomWriter.validateInput(args);
+        String[] args5 = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "-1", "2"};
+        assertThrows(IllegalArgumentException.class,
+                ()->RandomWriter.validateInput(args5));
+        String[] args6 = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1", "-2"};
+        assertThrows(IllegalArgumentException.class,
+                ()->RandomWriter.validateInput(args6));
 
         // length < k
-        args = new String[]{"test_text/Blank.txt", "BlankOut.txt", "1", "2"};
-        RandomWriter.validateInput(args);
-
+        String[] args7 = new String[]{"test_text/Blank.txt", "BlankOut.txt", "1", "2"};
+        assertThrows(IllegalArgumentException.class,
+                ()->RandomWriter.validateInput(args7));
         // Input file does not exist
-        args = new String[]{"test_text/Nonexistent.txt", "NonexistentOut.txt", "1", "2"};
-        RandomWriter.validateInput(args);
+        String[] args8 = new String[]{"test_text/Nonexistent.txt", "NonexistentOut.txt", "1", "2"};
+        assertThrows(IOException.class,
+                ()->RandomWriter.validateInput(args8));
 
-        // This is actually valid input
-        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut2.txt", "1", "2"};
-        RandomWriter.validateInput(args);
-        // Same, but output file doesn't exist
-        args = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut.txt", "1", "2"};
-        RandomWriter.validateInput(args);
+        // This is actually valid input, shouldn't throw an Exception
+        String[] args9 = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut2.txt", "1", "2"};
+        RandomWriter.validateInput(args9);
+
+        // Same, but output file doesn't exist, shouldn't throw an Exception
+        String[] args10 = new String[]{"test_books/MuchAdo.txt", "MuchAdoOut1234.txt", "1", "2"};
+        RandomWriter.validateInput(args10);
     }
 
     /**
@@ -58,6 +70,21 @@ public class RandomWriterTest {
         // Test some simple manually inspectable cases.
         checkAlphabet();
         checkAllOneCharacter();
+    }
+
+    /**
+     * Tests randomWriter readText to make sure it properly reads files.
+     */
+    @Test
+    public void testReading() throws IOException {
+        String alphabetReadTwice =
+                RandomWriter.fileContentsToString("test_text/ABCs.txt");
+        String alphabetActual = "abcdefghijklmnopqrstuvwxyz";
+        assertEquals(alphabetReadTwice, alphabetActual+alphabetActual);
+        String hindiAlphabetRead = RandomWriter.fileContentsToString(
+                "test_text/Hindi.txt");
+        String hindiAlphabetActual = "कखगघड़चछजझञटठडढणतथदधनपफबभमयरलवशषसह";
+        assertEquals(hindiAlphabetRead, hindiAlphabetActual);
     }
 
     /**
