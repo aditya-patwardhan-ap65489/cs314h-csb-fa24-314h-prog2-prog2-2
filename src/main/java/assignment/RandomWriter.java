@@ -11,8 +11,10 @@ import java.util.Map;
  * Your task is to implement this RandomWriter class
  */
 public class RandomWriter implements TextProcessor {
-    private final int level; // The level of the analysis being done.
-    private String inputText; // The text used to generate output.
+    // The level of the analysis being done.
+    private final int level;
+    // The text used to generate output.
+    private String inputText = "";
     private final Map<String, List<Character>> seedToNextCharacters;
 
     /**
@@ -45,7 +47,7 @@ public class RandomWriter implements TextProcessor {
      * @param args - The command line arguments.
      * @return boolean - Whether the input arguments are valid.
      */
-    private static boolean validateInput(String[] args) throws IOException {
+    public static boolean validateInput(String[] args) throws IOException {
         // Exit if not all arguments are provided
         if (args.length != 4) {
             System.err.println("Exactly 4 arguments must be provided.");
@@ -90,7 +92,7 @@ public class RandomWriter implements TextProcessor {
         }
         // Source file not long enough for k-th order analysis
         int inputCharCount = getFileCharCount(source);
-        if (inputCharCount < k) {
+        if (inputCharCount <= k) {
             System.err.println("The input file must have more than k characters.");
             System.err.println(source + " has " + inputCharCount + "characters.");
         }
@@ -142,13 +144,17 @@ public class RandomWriter implements TextProcessor {
 
     /**
      * Reads the text from a file for level-k analysis.
-     * @param inputFilename - Filename of the source text file.
-     * @throws IOException - If the file with the specified name doesn't exist.
+     * @param inputFilename - Name of the source text file.
      */
-    public void readText(String inputFilename) throws IOException {
+    public void readText(String inputFilename) {
         // Store input text and compute next letter frequency map for writing.
-        this.inputText = fileContentsToString(inputFilename);
-        populateNextLetterMap();
+        try {
+            this.inputText = fileContentsToString(inputFilename);
+            populateNextLetterMap();
+        } catch (IOException e) {
+            System.err.println("File " + inputFilename + " was not found or ");
+            System.err.println("could not be read.");
+        }
     }
 
     private static String fileContentsToString(String inputFilename)
@@ -164,7 +170,10 @@ public class RandomWriter implements TextProcessor {
             line = textReader.readLine();
         }
         // Remove the last newline character
-        textBuffer.deleteCharAt(textBuffer.length() - 1);
+        if (textBuffer.length() > 0) {
+            textBuffer.deleteCharAt(textBuffer.length() - 1);
+        }
+
         textReader.close();
         return textBuffer.toString();
     }
@@ -173,6 +182,7 @@ public class RandomWriter implements TextProcessor {
      * Populates seedToNextCharacters from the input text.
      */
     public void populateNextLetterMap() {
+        // Clear map because the same RandomWriter can analyze multiple texts.
         seedToNextCharacters.clear();
         int lastSeedIndex = inputText.length() - level - 1;
 
@@ -196,13 +206,17 @@ public class RandomWriter implements TextProcessor {
      * Writes text generated using input text to the output file.
      * @param outputFilename - Name of the file to write to.
      * @param length - Number of characters to write (non-negative).
-     * @throws IOException - If the destination file cannot be written to.
      */
-    public void writeText(String outputFilename, int length) throws IOException {
-        FileWriter outputWriter = new FileWriter(outputFilename);
-        String generatedText = generateText(length);
-        outputWriter.write(generatedText);
-        outputWriter.close();
+    public void writeText(String outputFilename, int length) {
+        try {
+            FileWriter outputWriter = new FileWriter(outputFilename);
+            String generatedText = generateText(length);
+            outputWriter.write(generatedText);
+            outputWriter.close();
+        } catch (IOException e) {
+            System.err.println("Could not write to output file " +
+                    outputFilename);
+        }
     }
 
     /**
@@ -214,12 +228,18 @@ public class RandomWriter implements TextProcessor {
         StringBuffer generatedTextBuffer = new StringBuffer();
         String seed = pickRandomSeed();
 
+        // Edge case - seedToNextCharacters is empty (caused by empty input)
+        if (seedToNextCharacters.isEmpty()) {
+            return "";
+        }
+
         // Generate (length) random characters.
         for (int i = 0; i < length; i++) {
             // Get random seed if current seed doesn't occur in the text.
             if (!seedToNextCharacters.containsKey(seed)) {
                 seed = pickRandomSeed();
             }
+
             // Pick a character using the seed and write it to the output file.
             List<Character> possibleNextChars = seedToNextCharacters.get(seed);
             int randomIndex = (int)(Math.random() * possibleNextChars.size());
